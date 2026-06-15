@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    container_name: underground-id-db
+    environment:
+      POSTGRES_USER: underground
+      POSTGRES_PASSWORD: underground123
+      POSTGRES_DB: underground_id
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: underground-id-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+  redis:
+    image: redis:7-alpine
+    container_name: underground-id-redis
+    ports:
+      - "6379:6379"
+volumes:
+  postgres_data:
