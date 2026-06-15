@@ -1,20 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const voiceService = require('../services/voiceService');
 
-// Process voice command
+// Process voice command with language detection
 router.post('/command', async (req, res) => {
   try {
-    const { audioData, userId } = req.body;
-    
-    // TODO: Convert speech to text using Google Cloud Speech-to-Text
-    // TODO: Parse command (check for "High ID" activation)
-    // TODO: Execute corresponding action
-    
-    res.json({ 
-      status: 'Command processed',
-      command: 'example_command',
-      response: 'Command executed successfully'
-    });
+    const { audioData, userId, language = 'en' } = req.body;
+
+    if (!audioData) {
+      return res.status(400).json({ error: 'Audio data required' });
+    }
+
+    const result = await voiceService.processCommand(audioData, language);
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -23,11 +22,37 @@ router.post('/command', async (req, res) => {
 // Detect voice activation
 router.post('/detect', async (req, res) => {
   try {
-    const { audioData } = req.body;
-    
-    // TODO: Check if audio contains "High ID" activation phrase
-    
-    res.json({ activated: false });
+    const { audioData, language = 'en' } = req.body;
+
+    const result = await voiceService.detectActivation(audioData, language);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Speech to text
+router.post('/transcribe', async (req, res) => {
+  try {
+    const { audioData, language = 'en' } = req.body;
+
+    const result = await voiceService.speechToText(audioData, language);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Text to speech
+router.post('/speak', async (req, res) => {
+  try {
+    const { text, language = 'en' } = req.body;
+
+    const result = await voiceService.textToSpeechGeneration(text, language);
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
