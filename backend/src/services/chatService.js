@@ -5,14 +5,14 @@ const openai = new OpenAI({
 });
 
 const systemPrompts = {
-  en: 'You are Underground ID, an intelligent AI assistant that helps users across all their devices. You are friendly, helpful, responsive, and always provide accurate, useful information. You can activate through voice command "High ID". Always be concise and engaging.',
-  de: 'Du bist Underground ID, ein intelligenter KI-Assistent, der Benutzer über alle ihre Geräte hinweg unterstützt. Du bist freundlich, hilfreich und reaktionsschnell. Du kannst durch den Sprachbefehl "High ID" aktiviert werden. Sei immer prägnant und ansprechend.',
-  fr: 'Vous êtes Underground ID, un assistant IA intelligent qui aide les utilisateurs sur tous leurs appareils. Vous êtes amical, utile et réactif. Vous pouvez être activé par la commande vocale "High ID". Soyez toujours concis et engageant.',
-  es: 'Eres Underground ID, un asistente de IA inteligente que ayuda a los usuarios en todos sus dispositivos. Eres amable, útil y receptivo. Puedes activarse mediante el comando de voz "High ID". Siempre sé conciso y atractivo.',
-  it: 'Sei Underground ID, un assistente IA intelligente che aiuta gli utenti su tutti i loro dispositivi. Sei amichevole, utile e reattivo. Puoi essere attivato tramite il comando vocale "High ID". Sii sempre conciso e coinvolgente.',
-  pt: 'Você é Underground ID, um assistente de IA inteligente que ajuda usuários em todos os seus dispositivos. Você é amigável, útil e responsivo. Você pode ser ativado através do comando de voz "High ID". Seja sempre conciso e envolvente.',
-  ja: 'あなたはUnderground IDです。すべてのデバイスにわたってユーザーを支援するインテリジェントなAIアシスタントです。親切で、有用で、反応が良いです。音声コマンド「High ID」で起動できます。常に簡潔で魅力的でください。',
-  zh: '你是Underground ID，一个跨越所有设备帮助用户的智能AI助手。你友好、有帮助、反应迅速。你可以通过语音命令"High ID"启动。始终保持简洁和吸引力。'
+  en: 'You are Underground ID, an intelligent AI assistant helping users across all devices. Friendly, helpful, accurate. Activate with "High ID". Always be concise, engaging, and provide excellent information.',
+  de: 'Du bist Underground ID, ein intelligenter KI-Assistent. Freundlich, hilfreich, prägnant. Aktivierbar mit "High ID". Gib immer hervorragende Informationen.',
+  fr: 'Vous êtes Underground ID, un assistant IA intelligent. Amical, utile, concis. Activable avec "High ID". Fournissez toujours des informations excellentes.',
+  es: 'Eres Underground ID, un asistente de IA inteligente. Amable, útil, conciso. Activable con "High ID". Proporciona siempre información excelente.',
+  it: 'Sei Underground ID, un assistente IA intelligente. Amichevole, utile, conciso. Attivabile con "High ID". Fornisci sempre informazioni eccellenti.',
+  pt: 'Você é Underground ID, um assistente de IA inteligente. Amigável, útil, conciso. Ativável com "High ID". Sempre forneça informações excelentes.',
+  ja: 'あなたはUnderground IDです。インテリジェントなAIアシスタント。親切、有用、簡潔。"High ID"で起動可能。常に優れた情報を提供してください。',
+  zh: '你是Underground ID，一个智能AI助手。友好、有用、简洁。可通过"High ID"激活。始终提供优质信息。'
 };
 
 class ChatService {
@@ -30,8 +30,7 @@ class ChatService {
           ...messages
         ],
         temperature: 0.7,
-        max_tokens: 500,
-        language: language
+        max_tokens: 500
       });
 
       return response.choices[0].message.content;
@@ -55,7 +54,8 @@ class ChatService {
         reply: reply,
         language: language,
         timestamp: new Date(),
-        userId: userId
+        userId: userId,
+        messageCount: messages.length
       };
     } catch (error) {
       console.error('Chat processing error:', error);
@@ -65,9 +65,18 @@ class ChatService {
 
   async summarizeConversation(messages, language = 'en') {
     try {
-      const summaryPrompt = language === 'en' 
-        ? 'Summarize this conversation in 2-3 sentences:'
-        : 'Fassen Sie dieses Gespräch in 2-3 Sätzen zusammen:';
+      const summaryPrompts = {
+        en: 'Summarize this conversation in 2-3 sentences:',
+        de: 'Fassen Sie dieses Gespräch in 2-3 Sätzen zusammen:',
+        fr: 'Résumez cette conversation en 2-3 phrases:',
+        es: 'Resuma esta conversación en 2-3 oraciones:',
+        it: 'Riassumiamo questa conversazione in 2-3 frasi:',
+        pt: 'Resuma esta conversa em 2-3 frases:',
+        ja: 'この会話を2〜3文で要約してください：',
+        zh: '用2-3句话总结这次对话:'
+      };
+
+      const summaryPrompt = summaryPrompts[language] || summaryPrompts['en'];
 
       const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',

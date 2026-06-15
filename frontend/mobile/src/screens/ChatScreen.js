@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Picker,
-  Alert
+  Alert,
+  ScrollView
 } from 'react-native';
 import axios from 'axios';
 import io from 'socket.io-client';
@@ -37,7 +38,7 @@ export default function ChatScreen() {
     {
       id: 1,
       role: 'assistant',
-      message: '👋 Welcome to Underground ID! How can I help you today? 🎤 Say "High ID" to activate voice commands.',
+      message: '👋 Welcome to Underground ID v2.0! 🚀 Say "High ID" to activate voice commands.',
       timestamp: new Date()
     }
   ]);
@@ -46,6 +47,7 @@ export default function ChatScreen() {
   const [isConnected, setIsConnected] = useState(false);
   const [language, setLanguage] = useState('en');
   const [voiceActive, setVoiceActive] = useState(false);
+  const [stats, setStats] = useState({ messages: 0, languages: 8 });
   const flatListRef = useRef(null);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function ChatScreen() {
 
     socket.on('connect', () => {
       setIsConnected(true);
-      console.log('✅ Connected to server');
+      console.log('✅ Connected');
     });
 
     socket.on('disconnect', () => {
@@ -67,11 +69,11 @@ export default function ChatScreen() {
 
     socket.on('chat:message', (data) => {
       setMessages(prev => [...prev, data]);
+      setStats(s => ({ ...s, messages: s.messages + 1 }));
     });
 
-    socket.on('voice:activated', (data) => {
+    socket.on('voice:activated', () => {
       setVoiceActive(true);
-      console.log('🎤 Voice activated');
     });
 
     return () => socket?.disconnect();
@@ -84,7 +86,6 @@ export default function ChatScreen() {
       id: Date.now(),
       role: 'user',
       message: input,
-      language: language,
       timestamp: new Date()
     };
 
@@ -96,43 +97,29 @@ export default function ChatScreen() {
       const response = await axios.post(`${API_BASE_URL}/chat/message`, {
         message: input,
         userId: 1,
-        language: language,
-        conversationHistory: messages.filter(m => m.role !== 'system')
+        language: language
       });
 
       const assistantMessage = {
         id: Date.now() + 1,
         role: 'assistant',
         message: response.data.reply,
-        language: language,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      setStats(s => ({ ...s, messages: s.messages + 2 }));
     } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert('Error', 'Failed to send message');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVoiceActivation = async () => {
+  const handleVoiceActivation = () => {
     setVoiceActive(!voiceActive);
-    
     if (!voiceActive) {
-      try {
-        const response = await axios.post(`${API_BASE_URL}/voice/detect`, {
-          audioData: 'mock_audio_data',
-          language: language
-        });
-        
-        if (response.data.detected) {
-          Alert.alert('✅ Voice Activated', `Underground ID activated in ${LANGUAGES.find(l => l.code === language)?.label}`);
-        }
-      } catch (error) {
-        Alert.alert('Error', 'Voice detection failed');
-      }
+      Alert.alert('🎤 Voice Activated', `Underground ID activated in ${LANGUAGES.find(l => l.code === language)?.label}`);
     }
   };
 
@@ -145,10 +132,7 @@ export default function ChatScreen() {
     >
       <Text style={styles.messageText}>{item.message}</Text>
       <Text style={styles.timestamp}>
-        {item.timestamp.toLocaleTimeString(language === 'de' ? 'de-DE' : 'en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })}
+        {item.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
       </Text>
     </View>
   );
@@ -159,9 +143,9 @@ export default function ChatScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>🎤 Underground ID</Text>
+            <Text style={styles.headerTitle}>🎤 Underground ID v2.0</Text>
             <Text style={styles.headerSubtitle}>
-              {isConnected ? '🟢 Online' : '🔴 Offline'} • {LANGUAGES.find(l => l.code === language)?.label}
+              {isConnected ? '🟢 Online' : '🔴 Offline'} • {stats.messages} messages
             </Text>
           </View>
           <TouchableOpacity 
@@ -173,18 +157,20 @@ export default function ChatScreen() {
         </View>
 
         {/* Language Selector */}
-        <View style={styles.languageSelector}>
-          <Text style={styles.languageLabel}>Language:</Text>
-          <Picker
-            selectedValue={language}
-            style={styles.picker}
-            onValueChange={(itemValue) => setLanguage(itemValue)}
-          >
-            {LANGUAGES.map(lang => (
-              <Picker.Item key={lang.code} label={lang.label} value={lang.code} />
-            ))}
-          </Picker>
-        </View>
+        <ScrollView horizontal style={styles.languageSelector}>
+          {LANGUAGES.map(lang => (
+            <TouchableOpacity
+              key={lang.code}
+              style={[
+                styles.languageButton,
+                language === lang.code && styles.languageButtonActive
+              ]}
+              onPress={() => setLanguage(lang.code)}
+            >
+              <Text style={styles.languageButtonText}>{lang.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Messages */}
         <FlatList
@@ -262,34 +248,35 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   voiceButtonActive: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#4CAF50',
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 8
+    backgroundColor: '#4CAF50'
   },
   voiceButtonText: {
     fontSize: 24
   },
   languageSelector: {
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#333'
   },
-  languageLabel: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 8
-  },
-  picker: {
-    flex: 1,
-    color: '#fff',
+  languageButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 4,
     backgroundColor: '#2a2a2a',
-    borderRadius: 4
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#333'
+  },
+  languageButtonActive: {
+    backgroundColor: '#ff6b35',
+    borderColor: '#ff6b35'
+  },
+  languageButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600'
   },
   messageList: {
     flex: 1
@@ -307,18 +294,15 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#ff6b35',
-    borderBottomRightRadius: 4
+    backgroundColor: '#ff6b35'
   },
   assistantBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2a2a2a',
-    borderBottomLeftRadius: 4
+    backgroundColor: '#2a2a2a'
   },
   messageText: {
     color: '#fff',
-    fontSize: 15,
-    lineHeight: 20
+    fontSize: 15
   },
   timestamp: {
     color: '#999',
@@ -337,8 +321,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     backgroundColor: '#2a2a2a',
     borderRadius: 24,
-    paddingHorizontal: 12,
-    paddingRight: 4
+    paddingHorizontal: 12
   },
   input: {
     flex: 1,
@@ -356,7 +339,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: '#ff6b35',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginLeft: 8
   },
   sendButtonDisabled: {
     backgroundColor: '#666'
