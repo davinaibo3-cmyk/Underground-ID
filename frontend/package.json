@@ -1,0 +1,11 @@
+{
+  "name": "underground-id-frontend",
+  "version": "1.0.0",
+  "description": "Underground ID - Frontend Applications",
+  "private": true,
+  "workspaces": [
+    "mobile",
+    "web",
+    "ar"
+  ]
+}
