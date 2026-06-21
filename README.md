@@ -191,3 +191,4 @@ MIT License - See LICENSE file for details
 ---
 
 **Build Underground ID. Shape the Future.** 🚀
+Konzepts für Hi-ID: Erstens, die zwei Persönlichkeiten Ibo und Davina. Zweitens, die nahtlose Integration von Google-Diensten. Drittens, der Internet-Super-Joker für Notfälle. Viertens, eine Sprach-Stimmungsanalyse. Fünftens, Vernetzung im Verkehr und Business. Sechstens, finanzielle Lösungsansätze für Wohlstand. Siebtens, Flughafen- und Nahverkehrs-Integration mit automatischer Buchung. Und achtens, umfassende Sprachsteuerung für Barrierefreiheit kombiniert mit verschiedenen Feedback-Signalen. 
